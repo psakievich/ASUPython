@@ -54,23 +54,13 @@ class MrVtkVector(mr.Vector):
     def inner_product(self,other):
         math_me=dsa.WrapDataObject(self.data)
         math_other=dsa.WrapDataObject(other.data)
-        #u_r
-        iP=np.vdot(math_me.PointData[3][0,:]+1j*math_me.PointData[0][0,:], \
-            np.transpose(math_other.PointData[3][0,:]+1j* \
-            math_other.PointData[0][0,:]))
-        #u_theta
-        iP=iP+np.vdot(math_me.PointData[3][1,:]+1j*math_me.PointData[0][1,:], \
-            np.transpose(math_other.PointData[3][1,:]+1j* \
-            math_other.PointData[0][1,:]))
-        #u_z
-        iP=iP+np.vdot(math_me.PointData[3][2,:]+1j*math_me.PointData[0][2,:], \
-            np.transpose(math_other.PointData[3][2,:]+1j* \
-            math_other.PointData[0][2,:]))
-        #temperature
-        iP=iP+np.vdot(math_me.PointData[5][:]+1j*math_me.PointData[2][:], \
-            np.transpose(math_other.PointData[5][:]+1j* \
-            math_other.PointData[2][:]))
-        return iP
+        IP=0.0
+        for i in range(len(self.__MyImagData)):
+            IP=IP+np.vdot(math_me.PointData[self.__MyRealData[i]][:]+ \
+                1j*math_me.PointData[self.__MyImagData[i]][:], \
+                math_other.PointData[self.__MyRealData[i]][:]+ \
+                1j*math_other.PointData[self.__MyImagData[i]][:])
+        return IP
     def complex_conjugate(self):
         new_data=vtkStructuredGrid()
         new_data.DeepCopy(self.data)

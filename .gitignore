@@ -1,1 +1,6 @@
 analysis
+*.pyc
+__pycache__
+*.txt
+*.dat
+*.vts

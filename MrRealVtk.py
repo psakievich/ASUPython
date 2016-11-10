@@ -42,14 +42,17 @@ class MrVtkVector(mr.Vector):
             IP=IP+np.vdot(np.transpose(math_me.PointData[i][:]), \
                 math_other.PointData[i][:])
         return IP
-class MrVecHandle(mr.VecHandle):
+class MrVtkVecHandle(mr.VecHandle):
     def __init__(self, vec_path, base_handle=None, scale=None):
+        mr.VecHandle.__init__(self,base_handle,scale)
         self.vec_path=vec_path
+        
     def _get(self):
         reader=vtkXMLStructuredGridReader()
         reader.SetFileName(self.vec_path)
         reader.Update()
         return(MrVtkVector(reader.GetOutput()))
+        
     def _put(self,vec):
         writer=vtkXMLStructuredGridWriter()
         writer.SetInputData(vec.data)
@@ -58,7 +61,7 @@ class MrVecHandle(mr.VecHandle):
 
 def point_product(v1,v2):
     new_data=vtkStructuredGrid()
-    new_data.DeepCopy(v1)
+    new_data.DeepCopy(v1.data)
     mv1=dsa.WrapDataObject(v1.data)
     mv2=dsa.WrapDataObject(v2.data)
     mvN=dsa.WrapDataObject(new_data)
@@ -68,7 +71,7 @@ def point_product(v1,v2):
     return MrVtkVector(new_data)
 def point_division(v1,v2):
     new_data=vtkStructuredGrid()
-    new_data.DeepCopy(v1)
+    new_data.DeepCopy(v1.data)
     mv1=dsa.WrapDataObject(v1.data)
     mv2=dsa.WrapDataObject(v2.data)
     mvN=dsa.WrapDataObject(new_data)
