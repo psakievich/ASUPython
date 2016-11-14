@@ -6,12 +6,14 @@ Created on Sat Oct 29 11:16:59 2016
 """
 import modred as mr
 import numpy as np
+import Quadratures
 #VTK RELATED STUFFS
 from vtk import vtkXMLStructuredGridReader,vtkXMLStructuredGridWriter, \
     vtkStructuredGrid
 from vtk.numpy_interface import dataset_adapter as dsa
-
-
+'''
+Vector class
+'''
 class MrVtkVector(mr.Vector):
     #use to define which dataset to perform operations on
     __MyRealData=[3,5]
@@ -52,7 +54,8 @@ class MrVtkVector(mr.Vector):
         return MrVtkVector(new_data)
     
     def inner_product(self,other):
-        math_me=dsa.WrapDataObject(self.data)
+        weighted_me=self.weighted_copy()
+        math_me=dsa.WrapDataObject(weighted_me.data)
         math_other=dsa.WrapDataObject(other.data)
         IP=0.0
         for i in range(len(self.__MyImagData)):
@@ -61,6 +64,7 @@ class MrVtkVector(mr.Vector):
                 math_other.PointData[self.__MyRealData[i]][:]+ \
                 1j*math_other.PointData[self.__MyImagData[i]][:])
         return IP
+        
     def complex_conjugate(self):
         new_data=vtkStructuredGrid()
         new_data.DeepCopy(self.data)
@@ -74,6 +78,36 @@ class MrVtkVector(mr.Vector):
     def get_rc_lists(self):
         return (self.__MyRealData,self.__MyImagData)
         
+    def weight_matrix(self):
+        dims=self.data.GetDimensions()
+        total=self.data.GetNumberOfPoints()
+        bounds=self.data.GetPoints().GetBounds()
+        B=np.array([bounds[1]-bounds[0],bounds[3]-bounds[2],bounds[5]-bounds[4]])
+        weights=np.empty(total)
+        QD=Quadratures.ChebyshevGauss()
+        for k in range(dims(2)):
+            for j in range(dims(1)):
+                for i in range(dims(0)):
+                    ii=i+j*dims(0)+k*(dims(0)*dims(1))
+                    weights[ii]=QD.Weight(dims(0),i)*QD.Weight(dims(2),k)
+        return weights*0.25*B[0]*B[2]
+
+    def weighted_copy(self):
+        new_data=vtkStructuredGrid()
+        new_data.DeepCopy(self.data)
+        math_new=dsa.WrapDataObject(new_data)
+        w=self.weight_matrix()
+        nFields=len(math_new.PointData.keys())
+        for i in range(nFields):
+            if(len(math_new.PointData[i].shape)>1):
+                for j in range(math_new.PointData[i].shape[1]):
+                    math_new.PointData[i][:,j]=math_new.PointData[i][:,j]*w
+            else:
+                math_new.PointData[i][:]=math_new.PointData[i][:]*w
+        return MrVtkVector(new_data)
+'''
+Vector handle
+'''        
 class MrVtkVecHandle(mr.VecHandle):
     def __init__(self, vec_path, base_handle=None, scale=None):
         mr.VecHandle.__init__(self,base_handle,scale)
@@ -90,7 +124,9 @@ class MrVtkVecHandle(mr.VecHandle):
         writer.SetInputData(vec.data)
         writer.SetFileName(self.vec_path)
         writer.Write()
-        
+'''
+ Namespace functions
+'''       
 def inner_product(v1,v2):
     return v1.inner_product(v2)
 
