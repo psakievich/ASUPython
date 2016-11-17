@@ -5,6 +5,8 @@ Created on Thu Nov 17 15:26:42 2016
 
 @author: psakievich
 """
+import numpy as np
+
 def ReadBrokenFile(fName,catEveryXLines):
     dataSet=[]
     with open(fName) as f:
@@ -18,3 +20,11 @@ def ReadBrokenFile(fName,catEveryXLines):
                 dataSet.append(temp)
                 temp=''
     return dataSet
+
+def PackBrokenFileIntoNumpy(dataSet):
+    len1=len(dataSet)
+    len2=len(dataSet[0])
+    arr=np.empty([len1,len2])
+    for i in range(len1):
+        arr[i,:]=np.array(dataSet[i].strip(),dtype=float)
+    return arr
