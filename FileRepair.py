@@ -12,7 +12,7 @@ def ReadBrokenFile(fName,catEveryXLines):
         temp=''
         for line in f:
             line=line.strip()
-            temp=temp+line
+            temp=temp+' '+line
             i=i+1
             if(i%catEveryXLines==0):
                 dataSet.append(temp)
