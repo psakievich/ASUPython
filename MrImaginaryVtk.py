@@ -21,36 +21,36 @@ class MrVtkVector(mr.Vector):
     def __init__(self,vtkStrGrid):
         self.data=vtkStrGrid
     def __add__(self, other):
-        """Return an object that is self+other for fields identified by 
-        __MyRealData and __MyImagData"""
+        """Return an object that is self+other for all fields 
+        """
         new_data=vtkStructuredGrid()
         new_data.DeepCopy(self.data)
         math_me=dsa.WrapDataObject(self.data)
         math_data=dsa.WrapDataObject(new_data)
         math_other=dsa.WrapDataObject(other.data)
-        for i in range(len(self.__MyRealData)):
-            math_data.PointData[self.__MyRealData[i]][:]= \
-                math_me.PointData[self.__MyRealData[i]][:]+ \
-                math_other.PointData[self.__MyRealData[i]][:]
-            math_data.PointData[self.__MyImagData[i]][:]= \
-                math_me.PointData[self.__MyImagData[i]][:]+ \
-                math_other.PointData[self.__MyImagData[i]][:]
+        numFlds=len(math_me.PointData.keys())
+        for i in range(numFlds):
+            math_data.PointData[i][:]= \
+                math_me.PointData[i][:]+ \
+                math_other.PointData[i][:]
+
         return MrVtkVector(new_data)
         
     def __mul__(self,scalar):
-        """Return an object that is self*scalar for fields identified by 
-        __MyRealData and __MyImagData"""
+        """Return an object that is self*scalar for all fields  
+        """
         new_data=vtkStructuredGrid()
         new_data.DeepCopy(self.data)
-        math_data=dsa.WrapDataObject(new_data)
+        math_data=dsa.WrapDataObject(new_data) 
         math_me=dsa.WrapDataObject(self.data)
-        for i in range(len(self.__MyRealData)):
-            math_data.PointData[self.__MyRealData[i]][:]= \
-                math_me.PointData[self.__MyRealData[i]][:]*np.real(scalar)- \
-                math_me.PointData[self.__MyImagData[i]][:]*np.imag(scalar)
-            math_data.PointData[self.__MyImagData[i]][:]= \
-                math_me.PointData[self.__MyImagData[i]][:]*np.real(scalar)+ \
-                math_me.PointData[self.__MyRealData[i]][:]*np.imag(scalar)
+        numFlds=len(math_me.PointData.keys())
+        for i in range(numFlds/2):
+            math_data.PointData[i+numFlds/2][:]= \
+                math_me.PointData[i+numFlds/2][:]*np.real(scalar)- \
+                math_me.PointData[i][:]*np.imag(scalar)
+            math_data.PointData[i][:]= \
+                math_me.PointData[i][:]*np.real(scalar)+ \
+                math_me.PointData[i+numFlds/2][:]*np.imag(scalar)
         return MrVtkVector(new_data)
     
     def inner_product(self,other):
@@ -70,7 +70,8 @@ class MrVtkVector(mr.Vector):
         new_data.DeepCopy(self.data)
         math_data=dsa.WrapDataObject(new_data)
         math_me=dsa.WrapDataObject(self.data)
-        for i in range(len(self.__MyRealData)):
+        numFlds=len(math_me.PointData.keys())
+        for i in range(numFlds/2):
             math_data.PointData[self.__MyImagData[i]][:]= \
                 math_me.PointData[self.__MyImagData[i]][:]*-1.0
         return MrVtkVector(new_data)
@@ -84,7 +85,7 @@ class MrVtkVector(mr.Vector):
         bounds=self.data.GetPoints().GetBounds()
         B=np.array([bounds[1]-bounds[0],bounds[3]-bounds[2],bounds[5]-bounds[4]])
         weights=np.empty(total)
-        QD=Quadratures.ChebyshevGauss()
+        QD=Quadratures.GaussLegendre()
         for k in range(dims(2)):
             for j in range(dims(1)):
                 for i in range(dims(0)):
