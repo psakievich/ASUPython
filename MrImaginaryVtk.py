@@ -76,6 +76,15 @@ class MrVtkVector(mr.Vector):
                 math_me.PointData[self.__MyImagData[i]][:]*-1.0
         return MrVtkVector(new_data)
         
+    def integrated_values(self):
+        weighted_me=self.weighted_copy
+        math_me=dsa.WrapDataObject(weighted_me.data)
+        numFlds=len(math_me.PointData.keys())
+        result=np.empty(numFlds)
+        for i in range(numFlds):
+            result[i]=np.sum(math_me.PointData[i][:])
+        return result
+        
     def get_rc_lists(self):
         return (self.__MyRealData,self.__MyImagData)
         
