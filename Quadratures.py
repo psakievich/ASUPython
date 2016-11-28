@@ -59,6 +59,10 @@ class GaussLegendre():
     def Weight(self,n,i):
         return self.Weights(n)[i]
 class GaussLobattoLegendre():
+    '''
+    pg. 61 Karniadakis and Sherwin "Spectral/hp Element Methods for 
+    Computational Fluid Dynamics" Secion Edition
+    '''
     def Points(self,n):
         p=np.empty(n)
         w=np.empty(n)

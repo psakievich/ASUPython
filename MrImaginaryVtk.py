@@ -44,13 +44,14 @@ class MrVtkVector(mr.Vector):
         math_data=dsa.WrapDataObject(new_data) 
         math_me=dsa.WrapDataObject(self.data)
         numFlds=len(math_me.PointData.keys())
-        for i in range(numFlds/2):
-            math_data.PointData[i+numFlds/2][:]= \
-                math_me.PointData[i+numFlds/2][:]*np.real(scalar)- \
+        numReal=int(numFlds/2)
+        for i in range(numReal):
+            math_data.PointData[i+numReal][:]= \
+                math_me.PointData[i+numReal][:]*np.real(scalar)- \
                 math_me.PointData[i][:]*np.imag(scalar)
             math_data.PointData[i][:]= \
                 math_me.PointData[i][:]*np.real(scalar)+ \
-                math_me.PointData[i+numFlds/2][:]*np.imag(scalar)
+                math_me.PointData[i+numReal][:]*np.imag(scalar)
         return MrVtkVector(new_data)
     
     def inner_product(self,other):
@@ -77,30 +78,42 @@ class MrVtkVector(mr.Vector):
         return MrVtkVector(new_data)
         
     def integrated_values(self):
-        weighted_me=self.weighted_copy
+        weighted_me=self.weighted_copy()
         math_me=dsa.WrapDataObject(weighted_me.data)
         numFlds=len(math_me.PointData.keys())
-        result=np.empty(numFlds)
+        k=0
         for i in range(numFlds):
-            result[i]=np.sum(math_me.PointData[i][:])
+           if(len(math_me.PointData[i].shape)>1):
+               k=k+math_me.PointData[i].shape[1]
+           else:
+               k=k+1 
+        result=np.empty(k)
+        j=0
+        for i in range(numFlds):
+            if(len(math_me.PointData[i].shape)>1):
+                for k in range(math_me.PointData[i].shape[1]):
+                    result[j]=np.sum(math_me.PointData[i][:,k])
+                    j=j+1
+            else:
+                result[j]=np.sum(math_me.PointData[i][:])
+                j=j+1
         return result
         
     def get_rc_lists(self):
         return (self.__MyRealData,self.__MyImagData)
         
-    def weight_matrix(self):
+    def weight_matrix(self,QD=Quadratures.GaussLegendre()):
         dims=self.data.GetDimensions()
-        total=self.data.GetNumberOfPoints()
         bounds=self.data.GetPoints().GetBounds()
         B=np.array([bounds[1]-bounds[0],bounds[3]-bounds[2],bounds[5]-bounds[4]])
-        weights=np.empty(total)
-        QD=Quadratures.GaussLegendre()
-        for k in range(dims(2)):
-            for j in range(dims(1)):
-                for i in range(dims(0)):
-                    ii=i+j*dims(0)+k*(dims(0)*dims(1))
-                    weights[ii]=QD.Weight(dims(0),i)*QD.Weight(dims(2),k)
-        return weights*0.25*B[0]*B[2]
+        wz=QD.Weights(dims[2])
+        wr=QD.Weights(dims[0])
+        weights=np.outer(wz,wr) #r is fastest varying in dataset
+        weights=np.reshape(weights,dims[0]*dims[2])
+        math_me=dsa.WrapDataObject(self.data)
+        weights=weights*math_me.Points[:,0] #multiply by R
+        weights=weights*0.25*B[0]*B[2] #multiply by jacobian
+        return weights
 
     def weighted_copy(self):
         new_data=vtkStructuredGrid()

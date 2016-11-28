@@ -3,6 +3,10 @@
 """
 Created on Thu Nov 17 15:26:42 2016
 
+File repair and plotting from the fracturing that 
+Stampede Fortran modules create when writing ASCII
+data 
+
 @author: psakievich
 """
 import numpy as np
@@ -21,10 +25,9 @@ def ReadBrokenFile(fName,catEveryXLines):
                 temp=''
     return dataSet
 
-def PackBrokenFileIntoNumpy(dataSet):
+def PackBrokenFileIntoNumpy(dataSet,lineLen):
     len1=len(dataSet)
-    len2=len(dataSet[0])
-    arr=np.empty([len1,len2])
+    arr=np.empty([len1,lineLen])
     for i in range(len1):
-        arr[i,:]=np.array(dataSet[i].strip(),dtype=float)
+        arr[i,:]=np.array(dataSet[i].split(),dtype=float)
     return arr
