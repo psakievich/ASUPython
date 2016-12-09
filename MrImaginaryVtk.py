@@ -44,7 +44,7 @@ class MrVtkVector(mr.Vector):
         math_data=dsa.WrapDataObject(new_data) 
         math_me=dsa.WrapDataObject(self.data)
         numFlds=len(math_me.PointData.keys())
-        numReal=int(numFlds/2)
+        numReal=int(numFlds/2)  
         for i in range(numReal):
             math_data.PointData[i+numReal][:]= \
                 math_me.PointData[i+numReal][:]*np.real(scalar)- \

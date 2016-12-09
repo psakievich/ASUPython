@@ -36,6 +36,9 @@ XLIM=YLIM
 fig=plt.figure()
 ax=plt.axes(xlim=XLIM,ylim=YLIM)
 ax.grid(True)
+ax.set_xlabel('Real')
+ax.set_ylabel('Imaginary')
+ax.set_title('Mode {} Temporal Evolution'.format(WAVE))
 velT,=ax.plot([],[],'-o',label=r'$v_{\theta}$')
 velR,=ax.plot([],[],'-o',label='$v_r$')
 velZ,=ax.plot([],[],'-o',label='$v_z$')
@@ -53,8 +56,8 @@ def init():
     
 def animate(i):
     velR.set_data(wave3.T[1,0:i],wave3.T[0,0:i]) 
-    velT.set_data(wave3.T[3,0:i],wave3.T[2,0:i]) 
-    velZ.set_data(wave3.T[5,0:i],wave3.T[4,0:i]) 
+    #velT.set_data(wave3.T[3,0:i],wave3.T[2,0:i]) 
+    #velZ.set_data(wave3.T[5,0:i],wave3.T[4,0:i]) 
     temp.set_data(wave3.T[9,0:i],wave3.T[8,0:i]) 
     time_text.set_text('SNAPSHOT={}'.format(i))
     return velR,velT,velZ,temp,time_text
@@ -63,6 +66,6 @@ ani=animation.FuncAnimation(fig,
                             animate,
                             init_func=init,
                             frames=FILERANGE[1], #generator, iterable or number of frames
-                            interval=100, #time delay between drawings (ms)
-                            repeat=0) 
+                            interval=200, #time delay between drawings (ms)
+                            repeat=5) 
 plt.show()
