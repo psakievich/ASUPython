@@ -40,9 +40,9 @@ def DefineLocalSizes(GlobalSize,Partitions,NumCores):
        return None
    divisor=GlobalSize/Partitions
    remainder=GlobalSize%Partitions
-   sizeLocal=np.outer(divisor,np.ones(nC,dtype=int))#(dimension,processor_id)
+   sizeLocal=np.outer(np.ones(nC,dtype=int),divisor.T)
    #add +1 if remainders
-   oddVals=np.zeros([len(GlobalSize),nC],dtype=int)
+   oddVals=sizeLocal.copy()*0
    
    for i in range(nC):
        #loop over processors
@@ -57,7 +57,7 @@ def DefineLocalSizes(GlobalSize,Partitions,NumCores):
                index=i%Partitions[0]
              
            if index<remainder[j]:
-               oddVals[j,i]+=1
+               oddVals[i,j]+=1
    sizeLocal+=oddVals
    return sizeLocal
    
@@ -96,7 +96,7 @@ def DefineExtents(GlobalSize,Partitions,NumCores):
                 iold[j]=icur[j]
                 cur[j]=old[j]
             extent[i,j*2]=cur[j]
-            extent[i,j*2+1]=cur[j]+sizeLocal.T[i,j]
+            extent[i,j*2+1]=cur[j]+sizeLocal[i,j]
             old[j]=extent[i,j*2+1]
 
     return extent
