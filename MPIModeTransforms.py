@@ -12,6 +12,7 @@ Parallel Processing of iFFT
 from mpi4py import MPI
 import numpy as np
 import vtk
+import Crystal as CR
 from vtk.numpy_interface import dataset_adapter as dsa
 
 def DefineLocalSizes(GlobalSize,Partitions,NumCores):
@@ -25,7 +26,9 @@ def DefineLocalSizes(GlobalSize,Partitions,NumCores):
        return None
    if np.prod(Partitions)!=nC:
        print 'ERROR:: Product of partions must match Number of cores'
+       print 'PARTITIONS: ',Partitions,'CORES: ',NumCores
        return None
+
    divisor=GlobalSize/Partitions
    remainder=GlobalSize%Partitions
    sizeLocal=np.outer(np.ones(nC,dtype=int),divisor.T)
@@ -96,10 +99,11 @@ def DivideFileList(fileList,rank,size):
     if rank>numFiles:
         return None
     else:
-        globalSize=np.array(numFiles,dtype=int)
+        globalSize=np.array([numFiles],dtype=int)
         readers=max(numFiles,size)
-        partitions=np.array(readers,dtype=int)
-        return DefineExtents(globalSize,partitions,readers)[rank] 
+        partitions=np.array([readers],dtype=int)
+        sizesPerRank=DefineLocalSizes(globalSize,partitions,readers)
+        return DefineExtents(globalSize,partitions,readers,sizesPerRank)[rank] 
 
 def RzFlatten(r,z,SIZES,MAJOR='r'):
     '''
@@ -134,9 +138,8 @@ def Foruier2Real(fileList,aRes,rzDims,rzPars):
     #define extents for each processor
     rzLDims=DefineLocalSizes(rzDims,rzPars,size)
     rzExtents=DefineExtents(rzDims,rzPars,size,rzLDims)
-    #set buffers
-    valueBuffer=np.empty(0,dtype=complex)
-    infoBuffer =[]
+    #initialize crystal router
+    crystal=CR.CrystalRouter(comm,dataType=np.complex)
     '''
     Variables are stored in grids as follows:
     grid[0,:,:,:]-->radial velocity
@@ -145,8 +148,8 @@ def Foruier2Real(fileList,aRes,rzDims,rzPars):
     grid[3,:,:,:]-->pressure
     grid[4,:,:,:]-->temperature
     '''
-    fGrid=np.empty(5,[rzLDims[rank][1],rzLDims[rank][0],aRes/2+1],dtype=complex)
-    rGrid=np.empty(5,[rzLDims[rank][1],rzLDims[rank][1],aRes])
+    fGrid=np.empty([5,rzLDims[rank][1],rzLDims[rank][0],aRes/2+1],dtype=np.complex)
+    rGrid=np.empty([5,rzLDims[rank][1],rzLDims[rank][1],aRes])
     #read in data and generate buffers
     if files2Read is not None:
         #read in data for each file in the list
@@ -159,7 +162,7 @@ def Foruier2Real(fileList,aRes,rzDims,rzPars):
             numpWG=dsa.WrapDataObject(waveGrid)
             #fill in my data
             rRange=range(rzExtents[rank][0],rzExtents[rank][1])
-            zRange=range(rzExtents[rank][2],rzExtents[rank][2])
+            zRange=range(rzExtents[rank][2],rzExtents[rank][3])
             '''
             Move data from vtk grid to pure numpy arrays for ease of transport
             and post processing.  A little cache thrashing now to eliminate it 
@@ -184,7 +187,7 @@ def Foruier2Real(fileList,aRes,rzDims,rzPars):
                 if vecIndex is not None:
                     for ii in range(rzLDims[rank][1]):
                         for jj in range(rzLDims[rank][0]):
-                            index=RzFlatten(rRange(jj),zRange(ii),rzDims)
+                            index=RzFlatten(rRange[jj],zRange[ii],rzDims)
                             fGrid[fGridIndex,ii,jj,waveNumber]= \
                                 complex(numpWG.PointData[realIndex][index,vecIndex], \
                                 numpWG.PointData[complexIndex][index,vecIndex] \
@@ -192,7 +195,7 @@ def Foruier2Real(fileList,aRes,rzDims,rzPars):
                 else:
                     for ii in range(rzLDims[rank][1]):
                         for jj in range(rzLDims[rank][0]):
-                            index=RzFlatten(rRange(jj),zRange(ii),rzDims)
+                            index=RzFlatten(rRange[jj],zRange[ii],rzDims)
                             fGrid[fGridIndex,ii,jj,waveNumber]= \
                                 complex(numpWG.PointData[realIndex][index], \
                                 numpWG.PointData[complexIndex][index]*ccAdjust)
@@ -200,11 +203,11 @@ def Foruier2Real(fileList,aRes,rzDims,rzPars):
                 '''
                 function to populate the crystal router buffers
                 '''
-                localBuffer=np.empty(np.prod(rzLDims[recvId]),dtype=complex)
+                localBuffer=np.empty(np.prod(rzLDims[recvId]),dtype=np.complex)
                 if vecIndex is not None:
                     for ii in range(rzLDims[recvId][1]):
                         for jj in range(rzLDims[recvId][0]):
-                            index=RzFlatten(rRange(jj),zRange(ii),rzDims)
+                            index=RzFlatten(rRange[jj],zRange[ii],rzDims)
                             iL=RzFlatten(jj,ii,rzLDims[recvId])
                             localBuffer[iL]= \
                                 complex(numpWG.PointData[realIndex][index,vecIndex], \
@@ -213,14 +216,13 @@ def Foruier2Real(fileList,aRes,rzDims,rzPars):
                 else:
                     for ii in range(rzLDims[recvId][1]):
                         for jj in range(rzLDims[recvId][0]):
-                            index=RzFlatten(rRange(jj),zRange(ii),rzDims)
+                            index=RzFlatten(rRange[jj],zRange[ii],rzDims)
                             iL=RzFlatten(jj,ii,rzLDims[recvId])
                             localBuffer[iL]= \
                                 complex(numpWG.PointData[realIndex][index], \
                                 numpWG.PointData[complexIndex][index] \
                                 *ccAdjust)
-                np.append(valueBuffer,localBuffer)
-                infoBuffer.append((recvId,waveNumber))
+                crystal.AddMessage(localBuffer,(recvId,waveNumber,len(localBuffer)))
             #------------------------------------------------------------------
             for k in range(size):
                 #loop over partitions and fill in buffer or local data depending 
@@ -229,16 +231,14 @@ def Foruier2Real(fileList,aRes,rzDims,rzPars):
                     FillFGrid(0,3,0,0)#ur
                     FillFGrid(1,3,0,1)#utheta
                     FillFGrid(2,3,0,2)#uz
-                    FillFGrid(4,4,1,None)#Pressure
-                    FillFGrid(5,5,2,None)#temperature
+                    FillFGrid(3,4,1,None)#Pressure
+                    FillFGrid(4,5,2,None)#temperature
                 else:
                     FillBuffers(3,0,0,k)
                     FillBuffers(3,0,1,k)
                     FillBuffers(3,0,2,k)
                     FillBuffers(4,1,None,k)
                     FillBuffers(5,2,None,k)
-            
-
     #transfer data
     #populate fourier grid from buffers
     #perform ifft

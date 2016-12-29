@@ -15,7 +15,7 @@ from vtk.numpy_interface import dataset_adapter as dsa
 Vector class
 '''
 class MrVtkVector(mr.Vector):
-    #use to define which dataset to perform operations on
+    #use to define which datasets for inner product
     __MyRealData=[3,5]
     __MyImagData=[0,2]
     def __init__(self,vtkStrGrid):
@@ -159,14 +159,15 @@ def point_product(v1,v2):
     math_new=dsa.WrapDataObject(new_data)
     math_v1=dsa.WrapDataObject(v1.data)
     math_v2=dsa.WrapDataObject(v2.data)
-    RL,CL=v1.get_rc_lists()
-    for i in range(len(RL)):
-        math_new.PointData[RL[i]][:]= \
-            math_v1.PointData[RL[i]][:]*math_v2.PointData[RL[i]][:]- \
-            math_v1.PointData[RL[i]][:]*math_v2.PointData[CL[i]][:]
-        math_new.PointData[CL[i]][:]= \
-            math_v1.PointData[CL[i]][:]*math_v2.PointData[RL[i]][:]+ \
-            math_v1.PointData[RL[i]][:]*math_v2.PointData[CL[i]][:]
+    nFields=len(math_new.PointData.keys())
+    offset=nFields//2
+    for i in range(nFields//2):
+        math_new.PointData[i+offset][:]= \
+            math_v1.PointData[i+offset][:]*math_v2.PointData[i+offset][:]- \
+            math_v1.PointData[i+offset][:]*math_v2.PointData[i][:]
+        math_new.PointData[i][:]= \
+            math_v1.PointData[i][:]*math_v2.PointData[i+offset][:]+ \
+            math_v1.PointData[i+offset][:]*math_v2.PointData[i][:]
     return MrVtkVector(new_data)
     
 def point_division(v1,v2):
@@ -174,10 +175,11 @@ def point_division(v1,v2):
     divisor=point_product(v2,v2.complex_conjugate())
     math_new=dsa.WrapDataObject(new_data.data)
     math_div=dsa.WrapDataObject(divisor.data)
-    RL,CL=v1.get_rc_lists()
-    for i in range(len(RL)):
-        math_new.PointData[RL[i]][:]= \
-            math_new.PointData[RL[i]][:]/math_div.PointData[RL[i]][:]
-        math_new.PointData[CL[i]][:]= \
-            math_new.PointData[CL[i]][:]/math_div.PointData[RL[i]][:]
+    nFields=len(math_new.PointData.keys())
+    offset=nFields//2
+    for i in range(offset):
+        math_new.PointData[i+offset][:]= \
+            math_new.PointData[i+offset][:]/math_div.PointData[i+offset][:]
+        math_new.PointData[i][:]= \
+            math_new.PointData[i][:]/math_div.PointData[i+offset][:]
     return new_data
