@@ -73,8 +73,7 @@ class MrVtkVector(mr.Vector):
         math_me=dsa.WrapDataObject(self.data)
         numFlds=len(math_me.PointData.keys())
         for i in range(numFlds/2):
-            math_data.PointData[self.__MyImagData[i]][:]= \
-                math_me.PointData[self.__MyImagData[i]][:]*-1.0
+            math_data.PointData[i][:]*=-1.0
         return MrVtkVector(new_data)
         
     def integrated_values(self):

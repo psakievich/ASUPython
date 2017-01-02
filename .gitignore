@@ -5,3 +5,4 @@ __pycache__
 *.dat
 *.vts
 Documentation
+.DS_Store
