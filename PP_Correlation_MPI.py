@@ -54,7 +54,7 @@ fluField=[]
 if rank==0:   
     for i in range(index1,index2+1):
         hTemp=MIV.MrVtkVecHandle(filePath+snapsFileTemplate.format(rank,i))
-        fluField.append(hTemp.get()+-1.0*avgField)
+        fluField.append(hTemp.get()-avgField)
 else:
     for i in range(index1,index2+1):
         hTemp=MIV.MrVtkVecHandle(filePath+snapsFileTemplate.format(rank,i))
