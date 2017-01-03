@@ -163,7 +163,7 @@ def point_product(v1,v2):
     for i in range(nFields//2):
         math_new.PointData[i+offset][:]= \
             math_v1.PointData[i+offset][:]*math_v2.PointData[i+offset][:]- \
-            math_v1.PointData[i+offset][:]*math_v2.PointData[i][:]
+            math_v1.PointData[i][:]*math_v2.PointData[i][:]
         math_new.PointData[i][:]= \
             math_v1.PointData[i][:]*math_v2.PointData[i+offset][:]+ \
             math_v1.PointData[i+offset][:]*math_v2.PointData[i][:]

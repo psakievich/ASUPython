@@ -63,7 +63,6 @@ else:
 #set up variables
 nPoints=avgField.data.GetNumberOfPoints()
 Rii=np.zeros([numFiles//2,nPoints],dtype=np.float64)
-corVel=Rii.copy()
 
 for i in range(numFiles//2):
     #assuming the signal is not periodic so we compute for seperations up to N/2
@@ -73,15 +72,15 @@ for i in range(numFiles//2):
         temp=MIV.point_product(fluField[j],fluField[j+i].complex_conjugate())
         #sum velocity components
         mTemp=dsa.WrapDataObject(temp.data)
-        Rii[i,:]+=np.sum(mTemp.PointData[3],axis=1)+np.sum(mTemp.PointData[0],axis=1)
+        Rii[i,:]+=np.sum(mTemp.PointData[3],axis=1)
     Rii[i,:]=Rii[i,:]/(numFiles-i)
     
 if rank >0:
     #double the size to acount for the negative wavenumbers
     Rii*=2.0
-    
+corVel=Rii.copy()    
 #Need to do MPI summation here for all wavenumbers
-comm.reduce(Rii,corVel,opp=MPI.SUM,root=0)
+comm.Reduce(corVel,op=MPI.SUM,root=0)
 for i in range(numFiles//2-1,-1,-1):    
     #Convert to correlation coefficient bounded by -1:1
     Rii[i,:]=Rii[i,:]/Rii[0,:]
@@ -98,9 +97,9 @@ if rank==0:
     for i in range(numFiles//2):
         timeTotal+=corVel[i,:]
 
-np.save(outputTemplate.format(rank,index1,index2),allow_pickle=False)
+np.save(outputTemplate.format(rank,index1,index2),timeLocal,allow_pickle=False)
 if rank==0:
-    np.save(totalOutTemp.format(index1,index2),allow_pickle=False)
+    np.save(totalOutTemp.format(index1,index2),timeTotal,allow_pickle=False)
     
 
 
