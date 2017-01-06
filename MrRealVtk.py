@@ -9,9 +9,9 @@ import numpy as np
 from vtk import vtkStructuredGrid, vtkXMLStructuredGridReader, \
     vtkXMLStructuredGridWriter
 from vtk.numpy_interface import dataset_adapter as dsa
-import MrImaginaryVtk as miv
+#import MrImaginaryVtk as miv
 
-class MrVtkVector(miv.MrVtkVector):
+class MrVtkVector(mr.Vector):
     def __init__(self,vtkStrGrid):
         self.data=vtkStrGrid
     def __mul__(self,scalar):
@@ -22,6 +22,21 @@ class MrVtkVector(miv.MrVtkVector):
         numFlds=len(math_me.PointData.keys())
         for i in range(numFlds):
             math_new.PointData[i][:]=math_me.PointData[i][:]*scalar
+        return MrVtkVector(new_data)
+    def __add__(self, other):
+        """Return an object that is self+other for all fields 
+        """
+        new_data=vtkStructuredGrid()
+        new_data.DeepCopy(self.data)
+        math_me=dsa.WrapDataObject(self.data)
+        math_data=dsa.WrapDataObject(new_data)
+        math_other=dsa.WrapDataObject(other.data)
+        numFlds=len(math_me.PointData.keys())
+        for i in range(numFlds):
+            math_data.PointData[i][:]= \
+                math_me.PointData[i][:]+ \
+                math_other.PointData[i][:]
+
         return MrVtkVector(new_data)
     def inner_product(self,other):
         weighted_me=self.weighted_copy()
