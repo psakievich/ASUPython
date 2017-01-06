@@ -12,6 +12,8 @@ from vtk.numpy_interface import dataset_adapter as dsa
 import MrImaginaryVtk as miv
 
 class MrVtkVector(miv.MrVtkVector):
+    def __init__(self,vtkStrGrid):
+        self.data=vtkStrGrid
     def __mul__(self,scalar):
         new_data=vtkStructuredGrid()
         new_data.DeepCopy(self.data)
