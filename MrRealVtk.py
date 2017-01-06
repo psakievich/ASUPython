@@ -48,6 +48,15 @@ class MrVtkVector(mr.Vector):
             IP=IP+np.vdot(np.transpose(math_me.PointData[i][:]), \
                 math_other.PointData[i][:])
         return IP
+    def power(self,power):
+        new_data=vtkStructuredGrid()
+        new_data.DeepCopy(self.data)
+        math_me=dsa.WrapDataObject(self.data)
+        math_new=dsa.WrapDataObject(new_data)
+        numFlds=len(math_me.PointData.keys())
+        for i in range(numFlds):
+            math_new.PointData[i][:]=math_me.PointData[i][:]**power
+        return MrVtkVector(new_data)
 class MrVtkVecHandle(mr.VecHandle):
     def __init__(self, vec_path, base_handle=None, scale=None):
         mr.VecHandle.__init__(self,base_handle,scale)
