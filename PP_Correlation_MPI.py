@@ -28,6 +28,7 @@ avgFile='{0}/S1Wave_{0}_TAVG_{1}-{2}.vts'
 outputTemplate='IntegralTSWave_{}_TSTEP_{}-{}'
 totalOutTemp='IntegralTTotal_TSTEP_{}-{}'
 numFiles=600
+tstep=3.0
 index1=0
 index2=index1+numFiles-1
 
@@ -38,7 +39,6 @@ import sys
 sys.path.append(sourcePath)
 from mpi4py import MPI
 import MrImaginaryVtk as MIV
-import vtk
 from vtk.numpy_interface import dataset_adapter as dsa
 
 #Set up mpi data
@@ -84,7 +84,7 @@ comm.Reduce(corVel,op=MPI.SUM,root=0)
 for i in range(numFiles//2-1,-1,-1):    
     #Convert to correlation coefficient bounded by -1:1
     Rii[i,:]=Rii[i,:]/Rii[0,:]
-    corVel[i,:]=corVel[i,:]/corVel[i,:]
+    corVel[i,:]=corVel[i,:]/corVel[0,:]
 
 #setup output variables for integral times
 timeLocal=Rii[0,:]*0.0
@@ -97,9 +97,9 @@ if rank==0:
     for i in range(numFiles//2):
         timeTotal+=corVel[i,:]
 
-np.save(outputTemplate.format(rank,index1,index2),timeLocal,allow_pickle=False)
+np.save(outputTemplate.format(rank,index1,index2),timeLocal*tstep,allow_pickle=False)
 if rank==0:
-    np.save(totalOutTemp.format(index1,index2),timeTotal,allow_pickle=False)
+    np.save(totalOutTemp.format(index1,index2),timeTotal*tstep,allow_pickle=False)
     
 
 

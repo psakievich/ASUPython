@@ -146,6 +146,47 @@ class MrVtkVecHandle(mr.VecHandle):
         writer.SetInputData(vec.data)
         writer.SetFileName(self.vec_path)
         writer.Write()
+class MrVtkVecHandleCreateFluctuation(mr.VecHandle):
+    def __init__(self, vec_path_inst, vec_path_mean,base_handle=None, scale=None):
+        mr.VecHandle.__init__(self,base_handle,scale)
+        self.vec_path=vec_path_inst
+        self.vec_path_mean=vec_path_mean
+        
+    def _get(self):
+        reader=vtkXMLStructuredGridReader()
+        reader.SetFileName(self.vec_path)
+        reader.Update()
+        hMean=MrVtkVecHandle(self.vec_path_mean)
+        return(MrVtkVector(reader.GetOutput())+ \
+               -1.0*hMean.get())
+        
+    def _put(self,vec):
+        writer=vtkXMLStructuredGridWriter()
+        writer.SetInputData(vec.data)
+        writer.SetFileName(self.vec_path)
+        writer.Write()
+
+class MrVtkVecHandleOperateOnFluctuation(mr.VecHandle):
+    def __init__(self, vec_path_inst, vec_path_mean,base_handle=None, scale=None):
+        mr.VecHandle.__init__(self,base_handle,scale)
+        self.vec_path=vec_path_inst
+        self.vec_path_mean=vec_path_mean
+        
+    def _get(self):
+        reader=vtkXMLStructuredGridReader()
+        reader.SetFileName(self.vec_path)
+        reader.Update()
+        hMean=MrVtkVecHandle(self.vec_path_mean)
+        return(MrVtkVector(reader.GetOutput())+ \
+               -1.0*hMean.get())
+        
+    def _put(self,vec):
+        hMean=MrVtkVecHandle(self.vec_path_mean)
+        vec+=hMean.get()
+        writer=vtkXMLStructuredGridWriter()
+        writer.SetInputData(vec.data)
+        writer.SetFileName(self.vec_path)
+        writer.Write()
 '''
  Namespace functions
 '''       
