@@ -87,5 +87,17 @@ class POD_Plot:
       DeleteAllPlots()
       SetActiveWindow(2)
       DeleteAllPlots()
+   def Save(self):
+      s=SaveWindowAttributes(
+      temp=obj.fileName.strip().split('_')
+      s.fileName="DocK_{}_m_{}".format(temp[1],temp[3])
+      s.family=0
+      s.format=s.POSTSCRIPT
+      s.saveTiled=1
+      SetSaveWindowAttributes(s)
+      SaveWindow()
    def CloseDB(self):
+      SetActiveWindow(1)
+      CloseDatabase(self.fileName)
+      SetActiveWindow(2)
       CloseDatabase(self.fileName)
