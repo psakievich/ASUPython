@@ -3,10 +3,8 @@ Batch process POD modes
 '''
 from visit import *
 class POD_Plot:
-   def __init__(self,fName,k,m):
+   def __init__(self,fName):
       self.fileName=fName
-      self.k=k
-      self.m=m
       self.label=None
    def OpenDB(self):
       OpenDatabase(self.fileName)
@@ -36,7 +34,6 @@ class POD_Plot:
       v=GetView3D()
       v.viewNormal=(0,-0.9,0.5)
       v.centerOfRotation = (1.57491, 1.57491, 0)
-      v.imagePan = (0.00334448, 0.0956679)
       legend=self.GetLegend()
       legend.orientation=legend.HorizontalBottom
       legend.managePosition=0
@@ -53,8 +50,8 @@ class POD_Plot:
       sa.sourceType=sa.SpecifiedBox
       sa.useWholeBox=0
       sa.boxExtents=(0,3.15,0,3.15,-0.3,0.3)
-      sa.sampleDensity0=5
-      sa.sampleDensity1=5
+      sa.sampleDensity0=15
+      sa.sampleDensity1=15
       sa.sampleDensity2=3
       sa.coloringMethod=sa.ColorByVariable
       sa.coloringVariable='temperature'
