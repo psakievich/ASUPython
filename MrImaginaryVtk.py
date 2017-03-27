@@ -13,6 +13,13 @@ from vtk import vtkXMLStructuredGridReader,vtkXMLStructuredGridWriter, \
 from vtk.numpy_interface import dataset_adapter as dsa
 '''
 Vector class
+This class operates on the flow field variables 
+as a single, flattened vector.  The vector 
+interfaces with the VTK structured grid.  
+Scalar*Vector, Vector+Vector and 
+(Vector,Vector).  The actual variables that 
+are used in the in the inner product are defined
+by the variables __MyRealData and __MyImagData.
 '''
 class MrVtkVector(mr.Vector):
     #use to define which datasets for inner product
@@ -102,6 +109,10 @@ class MrVtkVector(mr.Vector):
         return (self.__MyRealData,self.__MyImagData)
         
     def weight_matrix(self,QD=Quadratures.GaussLegendre()):
+        '''
+        Weighting matrix for the numerical integration. Different 
+        Quadratures can be specified
+        '''
         dims=self.data.GetDimensions()
         bounds=self.data.GetPoints().GetBounds()
         B=np.array([bounds[1]-bounds[0],bounds[3]-bounds[2],bounds[5]-bounds[4]])
