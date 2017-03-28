@@ -75,11 +75,12 @@ class POD_Plot:
       legend.managePosition=0
       legend.position=(0.3,0.25)
       #setup label
-      #self.label=CreateAnnotationObject("Text2D")
-      #self.label.position=(0.35,0.8)
-      #self.label.height=0.04
-      #self.label.fontBold=1
-      #self.label.text=r'k={} m={}'.format(self.k,self.m)
+      self.label=CreateAnnotationObject("Text2D")
+      self.label.position=(0.35,0.8)
+      self.label.height=0.04
+      self.label.fontBold=1
+      temp=self.fileName.strip(".vts").split('_')
+      self.label.text=r'k={} m={}'.format(temp[1],temp[3])
       DrawPlots()
    def ClearPlots(self):
       #self.label.Delete()
@@ -88,9 +89,9 @@ class POD_Plot:
       SetActiveWindow(2)
       DeleteAllPlots()
    def Save(self):
-      s=SaveWindowAttributes(
-      temp=obj.fileName.strip().split('_')
-      s.fileName="DocK_{}_m_{}".format(temp[1],temp[3])
+      s=SaveWindowAttributes()
+      temp=self.fileName.strip(".vts").split('_')
+      s.fileName='DocK_{}_m_{}'.format(temp[1],temp[3])
       s.family=0
       s.format=s.POSTSCRIPT
       s.saveTiled=1
