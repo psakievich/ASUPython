@@ -19,7 +19,7 @@ class TeXFile:
      self.Write(r'\centering')
      self.Write(r'[{}]'.format(sizing)+r'{{{}}}'.format(imageName))
      if caption is not None:
-        self.Write(r'\caption{{{}}}'.format(caption)
+        self.Write(r'\caption{{{}}}'.format(caption))
      self.Write(r'\end{{figure}}')
   def EndDocument(self)
      self.Write(r'\end{{document}}')
