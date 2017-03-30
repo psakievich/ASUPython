@@ -11,6 +11,7 @@ import Quadratures
 from vtk import vtkXMLStructuredGridReader,vtkXMLStructuredGridWriter, \
     vtkStructuredGrid
 from vtk.numpy_interface import dataset_adapter as dsa
+from vtk.util import numpy_support as ns
 '''
 Vector class
 This class operates on the flow field variables 
@@ -42,7 +43,10 @@ class MrVtkVector(mr.Vector):
                 math_other.PointData[i][:]
 
         return MrVtkVector(new_data)
-        
+    def DeepCopy(self):
+        temp=vtkStructuredGrid()
+        temp.DeepCopy(self.data)
+        return MrVtkVector(temp)   
     def __mul__(self,scalar):
         """Return an object that is self*scalar for all fields  
         """
@@ -67,10 +71,29 @@ class MrVtkVector(mr.Vector):
         math_other=dsa.WrapDataObject(other.data)
         IP=0.0
         for i in range(len(self.__MyImagData)):
-            IP=IP+np.vdot(math_me.PointData[self.__MyRealData[i]][:]+ \
-                1j*math_me.PointData[self.__MyImagData[i]][:], \
-                math_other.PointData[self.__MyRealData[i]][:]+ \
-                1j*math_other.PointData[self.__MyImagData[i]][:])
+          iR=self.__MyRealData[i]
+          iI=self.__MyImagData[i]
+          tempR=ns.vtk_to_numpy(weighted_me.data.GetPointData().GetArray(iR))
+          tempI=ns.vtk_to_numpy(weighted_me.data.GetPointData().GetArray(iI))*1j
+          me=tempR-tempI
+          #print type(me),type(me[0])
+        #  tempR=ns.vtk_to_numpy(other.data.GetPointData().GetArray(iR))
+        #  tempI=ns.vtk_to_numpy(other.data.GetPointData().GetArray(iI))*1j
+        #  ot=tempR+tempI
+        #  IP+=np.sum(me*ot)
+          IP=IP+np.vdot(math_me.PointData[iR][:]+ \
+               1j*math_me.PointData[iI][:], \
+               math_other.PointData[iR][:]+ \
+               1j*math_other.PointData[iI][:])
+
+         # if(len(math_me.PointData[iI].shape)>1):
+         #   for j in range(math_me.PointData[iI].shape[1]):
+         #      IP+=np.sum((math_me.PointData[iR][:,j]-1j*math_me.PointData[iI][:,j])*\
+         #                 (math_other.PointData[iR][:,j]+1j*math_other.PointData[iI][:,j]).T)
+         # else:
+         #   IP+=np.sum((math_me.PointData[iR][:]-1j*math_me.PointData[iI][:])*\
+         #              (math_other.PointData[iR][:]+1j*math_other.PointData[iI][:]).T)
+        #print(type(IP),IP)
         return IP
         
     def complex_conjugate(self):
@@ -115,9 +138,15 @@ class MrVtkVector(mr.Vector):
         '''
         dims=self.data.GetDimensions()
         bounds=self.data.GetPoints().GetBounds()
-        B=np.array([bounds[1]-bounds[0],bounds[3]-bounds[2],bounds[5]-bounds[4]])
+        #B=np.array([bounds[1]-bounds[0],bounds[3]-bounds[2],bounds[5]-bounds[4]])
+        #B=[3.15,0.0,1.0]
         wz=QD.Weights(dims[2])
         wr=QD.Weights(dims[0])
+        pr=QD.Points(dims[0])
+        pz=QD.Points(dims[2])
+        B=np.array([(bounds[1]-bounds[0])/(pr[dims[0]-1]-pr[0])*2.0, \
+                    (bounds[3]-bounds[2]), \
+                    (bounds[5]-bounds[4])/(pz[dims[2]-1]-pz[0])*2.0])
         weights=np.outer(wz,wr) #r is fastest varying in dataset
         weights=np.reshape(weights,dims[0]*dims[2])
         math_me=dsa.WrapDataObject(self.data)
