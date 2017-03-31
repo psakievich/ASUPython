@@ -80,7 +80,7 @@ class POD_Plot:
       self.label.height=0.04
       self.label.fontBold=1
       temp=self.fileName.strip(".vts").split('_')
-      self.label.text=r'k={} m={}'.format(temp[1],temp[3])
+      self.label.text=r'k={} m={}'.format(temp[1],int(temp[3])+1)
       DrawPlots()
    def ClearPlots(self):
       #self.label.Delete()

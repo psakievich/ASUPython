@@ -29,6 +29,7 @@ class Mode:
   def SetAnnotations(self):
     a=AnnotationAttributes()
     a.axes3D.visible=0
+    a.axes3D.triadFlag=0
     a.axes3D.bboxFlag=0
     a.userInfoFlag=0
     a.databaseInfoFlag=0   
