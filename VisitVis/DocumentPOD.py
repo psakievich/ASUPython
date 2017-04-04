@@ -26,9 +26,16 @@ class POD_Plot:
    def GeneratePlot2(self):
       SetActiveWindow(2)
       self.OpenDB()
-      AddPlot("Pseudocolor","temperature")
+      DefineScalarExpression("TotalTurbEnergy", \
+       "velocity[0]^2+"
+       "velocity[1]^2+"
+       "velocity[2]^2+"
+       "temperature^2")
+      AddPlot("Pseudocolor","TotalTurbEnergy")
       self.SetWindowProperties()
       p=PseudocolorAttributes()
+      p.minFlag=True
+      p.maxFlag=True
       p.colorTableName="hot_desaturated"
       SetPlotOptions(p)
       v=GetView3D()
@@ -37,7 +44,7 @@ class POD_Plot:
       legend=self.GetLegend()
       legend.orientation=legend.HorizontalBottom
       legend.managePosition=0
-      legend.position=(0.3,0.25)
+      legend.position=(0.3,0.95)
       SetView3D(v)
       DrawPlots()
    def GeneratePlot1(self):
@@ -66,8 +73,8 @@ class POD_Plot:
       SetPlotOptions(sa)
       #view
       v=GetView3D()
-      v.viewNormal=(0.762321, 0.466435, 0.44867)
-      v.viewUp=(-0.341935, -0.250559, 0.905704)
+      v.viewNormal=(0.690772, 0.350912, 0.632214)
+      v.viewUp=(-0.506025, -0.389949, 0.769337)
       SetView3D(v)
       #setup legend
       legend=self.GetLegend()
@@ -76,7 +83,7 @@ class POD_Plot:
       legend.position=(0.3,0.25)
       #setup label
       self.label=CreateAnnotationObject("Text2D")
-      self.label.position=(0.35,0.8)
+      self.label.position=(0.35,0.85)
       self.label.height=0.04
       self.label.fontBold=1
       temp=self.fileName.strip(".vts").split('_')
