@@ -46,6 +46,12 @@ class POD_Plot:
       legend.managePosition=0
       legend.position=(0.3,0.95)
       SetView3D(v)
+      AddOperator("Clip")
+      c=ClipAttributes()
+      c.plane1Status=False
+      c.plane3Status=True
+      c.plane3Origin=(0,0,0.4)
+      SetOperatorOptions(c)
       DrawPlots()
    def GeneratePlot1(self):
       SetActiveWindow(1)
