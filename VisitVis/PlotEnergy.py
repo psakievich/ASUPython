@@ -4,8 +4,8 @@ Batch process the plots from POD modes
 
 from visit import *
 
-dbTemp='{0}/POD_{0}_Mode_*.vts database'
-picTemp='TotalEnergyPOD_{0}_Mode'
+dbTemp='{0}/CLSPOD_{0}_Mode_*.vts database'
+picTemp='TotalEnergyCLSPOD_{0}_Mode'
 
 class Mode:
   def __init__(self,k):
