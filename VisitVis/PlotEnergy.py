@@ -39,6 +39,7 @@ class Mode:
     DrawPlots()
     p=PseudocolorAttributes()
     p.colorTableName="hot_desaturated"
+    p.maxFlag=True
     SetPlotOptions(p)
     plotName=GetPlotList().GetPlots(0).plotName
     legend=GetAnnotationObject(plotName)
