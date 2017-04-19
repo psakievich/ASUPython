@@ -52,6 +52,10 @@ class POD_Plot:
       c.plane3Status=True
       c.plane3Origin=(0,0,0.4)
       SetOperatorOptions(c)
+      gl=GetLight(1)
+      gl.direction=(-0.182, 0.0673, -0.981)
+      gl.enabledFlag=True
+      SetLight(1,gl)
       DrawPlots()
    def GeneratePlot1(self):
       SetActiveWindow(1)
