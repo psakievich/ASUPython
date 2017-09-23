@@ -161,7 +161,7 @@ class MrVtkVector(mr.Vector):
           weights*=math_me.Points[:,0] #multiply by R
           jacobian*=0.5*B[0]
         if zBool:
-          jaobian*=0.5*B[2]
+          jacobian*=0.5*B[2]
         weights=weights*jacobian #multiply by jacobian
         return weights
     
