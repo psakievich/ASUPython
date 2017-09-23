@@ -131,7 +131,7 @@ class MrVtkVector(mr.Vector):
     def get_rc_lists(self):
         return (self.__MyRealData,self.__MyImagData)
         
-    def weight_matrix(self,QD=Quadratures.GaussLegendre()):
+    def weight_matrix(self,QD=Quadratures.GaussLegendre(),rBool=True,zBool=True):
         '''
         Weighting matrix for the numerical integration. Different 
         Quadratures can be specified
@@ -140,8 +140,14 @@ class MrVtkVector(mr.Vector):
         bounds=self.data.GetPoints().GetBounds()
         #B=np.array([bounds[1]-bounds[0],bounds[3]-bounds[2],bounds[5]-bounds[4]])
         #B=[3.15,0.0,1.0]
-        wz=QD.Weights(dims[2])
-        wr=QD.Weights(dims[0])
+        if zBool:
+          wz=QD.Weights(dims[2])
+        else:
+          wz=np.ones(dims[2])
+        if rBool:
+          wr=QD.Weights(dims[0])
+        else:
+          wr=np.ones(dims[0])
         pr=QD.Points(dims[0])
         pz=QD.Points(dims[2])
         B=np.array([(bounds[1]-bounds[0])/(pr[dims[0]-1]-pr[0])*2.0, \
@@ -150,10 +156,15 @@ class MrVtkVector(mr.Vector):
         weights=np.outer(wz,wr) #r is fastest varying in dataset
         weights=np.reshape(weights,dims[0]*dims[2])
         math_me=dsa.WrapDataObject(self.data)
-        weights=weights*math_me.Points[:,0] #multiply by R
-        weights=weights*0.25*B[0]*B[2] #multiply by jacobian
+        jacobian=1.0
+        if rBool:
+          weights*=math_me.Points[:,0] #multiply by R
+          jacobian*=0.5*B[0]
+        if zBool:
+          jaobian*=0.5*B[2]
+        weights=weights*jacobian #multiply by jacobian
         return weights
-
+    
     def weighted_copy(self):
         new_data=vtkStructuredGrid()
         new_data.DeepCopy(self.data)
