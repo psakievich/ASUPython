@@ -165,11 +165,11 @@ class MrVtkVector(mr.Vector):
         weights=weights*jacobian #multiply by jacobian
         return weights
     
-    def weighted_copy(self):
+    def weighted_copy(self, rBool=True, zBool=True):
         new_data=vtkStructuredGrid()
         new_data.DeepCopy(self.data)
         math_new=dsa.WrapDataObject(new_data)
-        w=self.weight_matrix()
+        w=self.weight_matrix(rBool=rBool,zBool=zBool)
         nFields=len(math_new.PointData.keys())
         for i in range(nFields):
             if(len(math_new.PointData[i].shape)>1):
