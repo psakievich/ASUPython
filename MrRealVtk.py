@@ -38,6 +38,9 @@ class MrVtkVector(mr.Vector):
                 math_other.PointData[i][:]
 
         return MrVtkVector(new_data)
+    def __sub__(self, other):
+        return self+-1.0*other
+    
     def inner_product(self,other):
         weighted_me=self.weighted_copy()
         math_me=dsa.WrapDataObject(weighted_me.data)
