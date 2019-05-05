@@ -23,9 +23,9 @@ def Local2Global(indLocal, writingRank, gBlock, lBlock):
 
 def ExtractRangeFromMean(mean, minPoint, maxPoint):
     mean_math = dsa.WrapDataObject(mean.data)
-    vel = mean_math.GetPointData().GetArray(3)
-    pre = mean_math.GetPointData().GetArray(4)
-    tem = mean_math.GetPointData().GetArray(5)
+    vel = mean_math.GetPointData().GetArray(0)
+    pre = mean_math.GetPointData().GetArray(1)
+    tem = mean_math.GetPointData().GetArray(2)
     shape = [d for d in mean.data.GetDimensions()[::-1]]
     shapeV = [d for d in mean.data.GetDimensions()[::-1]]
     shapeV.append(3)
@@ -183,9 +183,52 @@ def AddSubset(totalSet, subSet, corner0, corner1):
     vT=vT.reshape([len(pT),3])
     
     for i in range(totalPoints):
-        totalSet.data.GetPointData().GetArray(0).SetTuple3(i,vT[i,0],vT[i,1],vT[i,2])
-        totalSet.data.GetPointData().GetArray(1).SetTuple1(i,pT[i])
-        totalSet.data.GetPointData().GetArray(2).SetTuple1(i,tT[i])
+        totalSet.data.GetPointData().GetArray(3).SetTuple3(i,vT[i,0],vT[i,1],vT[i,2])
+        totalSet.data.GetPointData().GetArray(4).SetTuple1(i,pT[i])
+        totalSet.data.GetPointData().GetArray(5).SetTuple1(i,tT[i])
     
     
+def ReduceGridToRank0(grid,comm):
+    math_grid = dsa.WrapDataObject(grid.data)
+    for i in range(grid.data.GetPointData().GetNumberOfArrays()):
+        comm.Reduce(math_grid.PointData[i][:],
+                    math_grid.PointData[i][:])
+        
+def Cart2Cyl(points, velocity):
+    # assume these are vtkArrays
+    totalPoints = points.GetNumberOfPoints()
+    if(totalPoints != velocity.GetNumberOfTuples()):
+        raise Exception("Cart2Cyl::Points and velocity dimensions don't match.")
+        
+    for i in range(totalPoints):
+        x,y,z = points.GetPoint(i)
+        u,v,w = velocity.GetTuple3(i)
+        
+        r = np.sqrt(x**2+y**2)
+        theta = np.angle(x+y*1.0j)
+        
+        vr = u*np.cos(theta)+v*np.sin(theta)
+        vtheta = -u*np.sin(theta)+v*np.cos(theta)
+        
+        points.SetPoint(i,r,theta,z)
+        velocity.SetTuple3(i,vr,vtheta,w)
     
+
+def Cyl2Cart(points, velocity):
+    # assume these are vtkArrays
+    totalPoints = points.GetNumberOfPoints()
+    if(totalPoints != velocity.GetNumberOfTuples()):
+        raise Exception("Cart2Cyl::Points and velocity dimensions don't match.")
+        
+    for i in range(totalPoints):
+        r,theta,z = points.GetPoint(i)
+        vr,vtheta,w = velocity.GetTuple3(i)
+        
+        x = r*np.cos(theta)
+        y = r*np.sin(theta)
+        
+        u = vr*np.cos(theta)-vtheta*np.sin(theta)
+        v = vr*np.sin(theta)+vtheta*np.cos(theta)
+        
+        points.SetPoint(i,x,y,z)
+        velocity.SetTuple3(i,u,v,w)

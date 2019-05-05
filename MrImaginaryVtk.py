@@ -178,6 +178,16 @@ class MrVtkVector(mr.Vector):
             else:
                 math_new.PointData[i][:]=math_new.PointData[i][:]*w
         return MrVtkVector(new_data)
+    
+    def power(self,power):
+        new_data=vtkStructuredGrid()
+        new_data.DeepCopy(self.data)
+        math_me=dsa.WrapDataObject(self.data)
+        math_new=dsa.WrapDataObject(new_data)
+        numFlds=len(math_me.PointData.keys())
+        for i in range(numFlds):
+            math_new.PointData[i][:]=math_me.PointData[i][:]**power
+        return MrVtkVector(new_data)
 '''
 Vector handle
 '''        
