@@ -28,13 +28,15 @@ if __name__ == "__main__":
     comm = MPI.COMM_WORLD
     rank = comm.Get_rank()
     size = comm.Get_size()
-    global_blocks = (1,8,160)
+    global_blocks = (1,20,64)
     
     # all ranks read the mean value
     mean = MIV.MrVtkVecHandle(mean_file_path).get()
     
+    mdims = mean.data.GetDimensions()
+    
     # switch index to match real data
-    mean.data.SetDimensions((1,64,160))
+    mean.data.SetDimensions((mdims[1],mdims[0],mdims[2]))
     
     variance = mean*0.0
     skewness = mean*0.0
@@ -74,6 +76,10 @@ if __name__ == "__main__":
         # normalize skewness and kurtosis
         skewness = MIV.point_division(skewness,variance.power(1.5))
         kurtosis = MIV.point_division(kurtosis,variance.power(2.0))
+        
+        variance.data.SetDimensions(mdims)
+        skewness.data.SetDimensions(mdims)
+        kurtosis.data.SetDimensions(mdims)
         
         # write result files
         MIV.MrVtkVecHandle("variance.vts").put(variance)

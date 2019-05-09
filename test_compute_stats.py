@@ -15,14 +15,14 @@ from operator import mul
 class TestComputingStats(unittest.TestCase):
     def setUp(self):
         # mean def
-        self.MeanSize = (1, 64, 160) #swaped for construction
+        self.MeanSize = (1, 160, 64) #swaped for construction
         self.MeanTotal = reduce(mul, self.MeanSize)
         temp = np.arange(0,self.MeanTotal)
         vel = np.array([temp,temp*2.0,temp*4.0],dtype=float).T
         self.np_mean_arrays=[vel,temp,temp*0.25]
         #ins def
         self.thetaSample=5
-        self.realBlocks = (1,8,160)
+        self.realBlocks = (1,20,64)
         self.InsSize = (self.thetaSample/self.realBlocks[0],
                         self.MeanSize[1]/self.realBlocks[1],
                         self.MeanSize[2]/self.realBlocks[2])
