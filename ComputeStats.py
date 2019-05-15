@@ -19,7 +19,7 @@ compute final QOI
 write files
 '''
 
-mean_file_path=os.environ["SCRATCH"]+'/FFT_Results/Snaps/0/SymWave_0_TAVG_0-1017.vts'
+mean_file_path=os.environ["HOME"]+'/soft/ASUPython/SymWave_0_TAVG_0-1017.vts'
 num_tsteps = 1
 num_writing_procs = 3
 file_template = "{tstep}/RSnap_{wrank}_TSTEP_{tstep}.vts"
