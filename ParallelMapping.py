@@ -24,25 +24,25 @@ def Local2Global(indLocal, writingRank, gBlock, lBlock):
 def ExtractRangeFromMean(mean, minPoint, maxPoint):
     mean_math = dsa.WrapDataObject(mean.data)
     vel = mean_math.GetPointData().GetArray(0)
-    pre = mean_math.GetPointData().GetArray(1)
+    #pre = mean_math.GetPointData().GetArray(1)
     tem = mean_math.GetPointData().GetArray(2)
     shape = [d for d in mean.data.GetDimensions()[::-1]]
     shapeV = [d for d in mean.data.GetDimensions()[::-1]]
     shapeV.append(3)
     vel = vel.reshape(shapeV)
-    pre = pre.reshape(shape)
+    #pre = pre.reshape(shape)
     tem = tem.reshape(shape)
     v=vel[minPoint[2]:maxPoint[2],
                minPoint[1]:maxPoint[1],
                minPoint[0]:maxPoint[0],
                :]
-    p=pre[minPoint[2]:maxPoint[2],
-               minPoint[1]:maxPoint[1],
-               minPoint[0]:maxPoint[0]]
+    #p=pre[minPoint[2]:maxPoint[2],
+    #           minPoint[1]:maxPoint[1],
+    #           minPoint[0]:maxPoint[0]]
     t=tem[minPoint[2]:maxPoint[2],
                minPoint[1]:maxPoint[1],
                minPoint[0]:maxPoint[0]]
-    return v,p,t
+    return v,t
                
                    
 def CreateStructuredGrid(nSize, writeRank, gBlock):
@@ -71,16 +71,15 @@ def CreateStructuredGrid(nSize, writeRank, gBlock):
 def CreateMrReal(nSize, writeRank, gBlock, np_arrays):
     grid = CreateStructuredGrid(nSize, writeRank, gBlock)
     
-    vel3d, pre3d, tem3d = (numpy_support.numpy_to_vtk(np_arrays[0], 1, 10),
-                           numpy_support.numpy_to_vtk(np_arrays[1], 1, 10),
-                           numpy_support.numpy_to_vtk(np_arrays[2], 1, 10))
+    vel3d, tem3d = (numpy_support.numpy_to_vtk(np_arrays[0], 1, 10),
+                    numpy_support.numpy_to_vtk(np_arrays[1], 1, 10))
     
     vel3d.SetName('velocity')
     tem3d.SetName('temperature')
-    pre3d.SetName('pressure')
+    #pre3d.SetName('pressure')
     
     grid.GetPointData().SetVectors(vel3d)
-    grid.GetPointData().AddArray(pre3d)
+    #grid.GetPointData().AddArray(pre3d)
     grid.GetPointData().SetScalars(tem3d)
     return mrv.MrVtkVector(grid)
 
@@ -129,28 +128,26 @@ def CreateLocalMeanMr(mean, inst, writeRank, gBlock):
                        np.matmul(copyArray,arrays[0][:,:,:,1].flatten()),
                        np.matmul(copyArray,arrays[0][:,:,:,2].flatten()),
                        ]).T
-    pmL=np.matmul(copyArray,arrays[1].flatten())
-    tmL=np.matmul(copyArray,arrays[2].flatten())
+    #pmL=np.matmul(copyArray,arrays[1].flatten())
+    tmL=np.matmul(copyArray,arrays[1].flatten())
 
-    return CreateMrReal(InsSize,writeRank,gBlock,(vmL,pmL,tmL)),corner0,corner1
+    return CreateMrReal(InsSize,writeRank,gBlock,(vmL,tmL)),corner0,corner1
 
 def AzimuthalAverage(snap, writeRank, gBlock):
     localDim = [d for d in snap.data.GetDimensions()[::-1]]
     localDimV = [d for d in snap.data.GetDimensions()[::-1]]
     localDimV.append(3)
     snap_math = dsa.WrapDataObject(snap.data)
-    v,p,t = (snap_math.PointData[0].reshape(localDimV),
-             snap_math.PointData[1].reshape(localDim),
-             snap_math.PointData[2].reshape(localDim))
+    v,t = (snap_math.PointData[0].reshape(localDimV),
+             snap_math.PointData[1].reshape(localDim))
     
-    vA,pA,tA = (np.mean(v,axis=2), np.mean(p,axis=2), np.mean(t,axis=2))
+    vA,tA = (np.mean(v,axis=2), np.mean(t,axis=2))
     #vA = np.array([vA[:,:,0].flatten(),vA[:,:,1].flatten(),vA[:,:,2].flatten()])
-    pA = pA.flatten()
     tA = tA.flatten()
-    vA=vA.reshape([len(pA),3])
+    vA=vA.reshape([len(tA),3])
     newSize = localDim[::-1]
     newSize[0] = 1
-    return CreateMrReal(newSize, writeRank, gBlock, (vA, pA, tA))
+    return CreateMrReal(newSize, writeRank, gBlock, (vA, tA))
 
 def AddSubset(totalSet, subSet, corner0, corner1):
     c0=corner0[::-1]
@@ -168,12 +165,11 @@ def AddSubset(totalSet, subSet, corner0, corner1):
     ssDimV = [d for d in subSet.data.GetDimensions()[::-1]]
     ssDimV.append(3)
     ss_math = dsa.WrapDataObject(subSet.data)
-    vS,pS,tS = (ss_math.PointData[0].reshape(ssDimV),
-                ss_math.PointData[1].reshape(ssDim),
-                ss_math.PointData[2].reshape(ssDim))
+    vS,tS = (ss_math.PointData[0].reshape(ssDimV),
+                ss_math.PointData[1].reshape(ssDim))
     
     vT[c0[0]:c1[0],c0[1]:c1[1],c0[2]:c1[2]] += vS
-    pT[c0[0]:c1[0],c0[1]:c1[1],c0[2]:c1[2]] += pS
+    #pT[c0[0]:c1[0],c0[1]:c1[1],c0[2]:c1[2]] += pS
     tT[c0[0]:c1[0],c0[1]:c1[1],c0[2]:c1[2]] += tS
     
     totalPoints = totalSet.data.GetNumberOfPoints()
@@ -184,7 +180,7 @@ def AddSubset(totalSet, subSet, corner0, corner1):
     
     for i in range(totalPoints):
         totalSet.data.GetPointData().GetArray(3).SetTuple3(i,vT[i,0],vT[i,1],vT[i,2])
-        totalSet.data.GetPointData().GetArray(4).SetTuple1(i,pT[i])
+        #totalSet.data.GetPointData().GetArray(4).SetTuple1(i,pT[i])
         totalSet.data.GetPointData().GetArray(5).SetTuple1(i,tT[i])
     
     
