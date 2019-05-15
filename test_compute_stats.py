@@ -31,7 +31,7 @@ class TestComputingStats(unittest.TestCase):
 
         temp = np.arange(0,self.InsTotal)
         vel = np.array([temp,temp*2.0,temp*4.0],dtype=float).T
-        self.np_ins_arrays=[vel,temp,temp*0.25]
+        self.np_ins_arrays=[vel,temp*0.25]
         self.corner0 = pm.Local2Global((0,0,0),self.writeRank, self.realBlocks,
                                        self.InsSize)
         corner1 = pm.Local2Global(self.InsSize,self.writeRank,
@@ -50,26 +50,25 @@ class TestComputingStats(unittest.TestCase):
             self.assertEqual((1,self.InsSize[1],self.InsSize[2]),self.corner1)
     
     def test_ExtractRangeFromMeanShape(self):
-        v,p,t = pm.ExtractRangeFromMean(self.mean, self.corner0, self.corner1)
+        v,t = pm.ExtractRangeFromMean(self.mean, self.corner0, self.corner1)
         self.assertEqual((1,8,1,3),v.shape)
-        self.assertEqual((1,8,1),p.shape)
         self.assertEqual((1,8,1),t.shape)
         
     def test_AreValuesIndexedCorrectly(self):
         if self.writeRank != 0: 
             return
-        v,p,t = pm.ExtractRangeFromMean(self.mean,self.corner0,self.MeanSize)
+        v,t = pm.ExtractRangeFromMean(self.mean,self.corner0,self.MeanSize)
         for z in range(self.MeanSize[2]):
             for r in range(self.MeanSize[1]):
-                vNp = self.np_mean_arrays[1][r+z*self.MeanSize[1]]
-                vVtk = self.mean.data.GetPointData().GetArray(4).GetTuple(
+                vNp = self.np_mean_arrays[2][r+z*self.MeanSize[1]]
+                vVtk = self.mean.data.GetPointData().GetArray(5).GetTuple(
                         r+z*self.MeanSize[1])
                 self.assertEqual(vNp,vVtk,(r,z,vNp,vVtk))
-                self.assertEqual(vNp,p[z,r,0],(r,z,vNp,p[z,r,0]))
+                self.assertEqual(vNp,t[z,r,0],(r,z,vNp,t[z,r,0]))
                 
     #@unittest.skip("Skipping extraction")   
     def test_ExtractRangeFromMeanValues(self):
-        v,p,t = pm.ExtractRangeFromMean(self.mean, self.corner0, self.corner1)
+        v,t = pm.ExtractRangeFromMean(self.mean, self.corner0, self.corner1)
         vShape = [r for r in self.MeanSize[::-1]]
         vShape.append(3)
         vExact = self.np_mean_arrays[0].reshape(vShape)
@@ -80,16 +79,16 @@ class TestComputingStats(unittest.TestCase):
         
     #@unittest.skip("Skipping extraction")    
     def test_MatchValuesFromMeanAndInst(self):
-        vM,pM,tM = pm.ExtractRangeFromMean(self.mean,self.corner0,self.corner1)
+        vM,tM = pm.ExtractRangeFromMean(self.mean,self.corner0,self.corner1)
         m_ins = dsa.WrapDataObject(self.inst.data)
         
-        pI=m_ins.PointData[1].reshape(self.inst.data.GetDimensions()[::-1])
-        self.assertTrue(pI[:,:,0].shape==pM[:,:,0].shape,
-                        (pI[:,:,0].shape,pM[:,:,0].shape))
+        tI=m_ins.PointData[1].reshape(self.inst.data.GetDimensions()[::-1])
+        self.assertTrue(tI[:,:,0].shape==tM[:,:,0].shape,
+                        (tI[:,:,0].shape,tM[:,:,0].shape))
         if self.writeRank != 0:
             return
-        self.assertTrue((pI[:,:,0]/self.InsSize[0]==pM[:,:,0]).all(),
-                        (pI[:,:,0],pM[:,:,0]))
+        self.assertTrue((tI[:,:,0]/self.InsSize[0]==tM[:,:,0]).all(),
+                        (tI[:,:,0],tM[:,:,0]))
         
     def test_ComputingFluctuations(self):
         meanL,corner0,corner1 = pm.CreateLocalMeanMr(self.mean,
@@ -112,21 +111,14 @@ class TestComputingStats(unittest.TestCase):
                              self.inst.data.GetPointData().GetArray(0).GetTuple3(
                                      k+(j+i*self.InsSize[1])*self.InsSize[0])
                              -arrays[0][i,j,0]).all())
-                    # pressure matches
+                    # temperature matches
                     self.assertEqual(
                             fluc.data.GetPointData().GetArray(1).GetTuple(
                             k+(j+i*self.InsSize[1])*self.InsSize[0]),
                              self.inst.data.GetPointData().GetArray(1).GetTuple(
                                      k+(j+i*self.InsSize[1])*self.InsSize[0])
                              -arrays[1][i,j,0])
-                             
-                    #temperature matches
-                    self.assertEqual(
-                            fluc.data.GetPointData().GetArray(2).GetTuple(
-                            k+(j+i*self.InsSize[1])*self.InsSize[0]),
-                             self.inst.data.GetPointData().GetArray(2).GetTuple(
-                                     k+(j+i*self.InsSize[1])*self.InsSize[0])
-                             -arrays[2][i,j,0])
+
                              
     def test_AzimuthalAverage(self):
         meanL,corner0,corner1 = pm.CreateLocalMeanMr(self.mean,
@@ -148,7 +140,7 @@ class TestComputingStats(unittest.TestCase):
             aAvg = pm.AzimuthalAverage(meanL, self.writeRank, self.realBlocks)
             pm.AddSubset(newGrid,aAvg,corner0,corner1)
         ng_math = dsa.WrapDataObject(newGrid.data)
-        self.assertFalse(np.sum(ng_math.PointData[1]==0)==8*4)
+        self.assertFalse(np.sum(ng_math.PointData[5]==0)==8*4)
         
 
 if __name__=='__main__':
