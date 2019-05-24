@@ -20,8 +20,8 @@ write files
 '''
 
 mean_file_path=os.environ["HOME"]+'/soft/ASUPython/SymWave_0_TAVG_0-1017.vts'
-num_tsteps = 1
-num_writing_procs = 3
+num_tsteps = 1024
+num_writing_procs = 1280
 file_template = "{tstep}/RSnap_{wrank}_TSTEP_{tstep}.vts"
 
 if __name__ == "__main__":
@@ -45,14 +45,21 @@ if __name__ == "__main__":
     # each time step divide files amongst processors
     for t in range(num_tsteps):
         for writeRank in range(rank, num_writing_procs, size):
+            print "Processing time: {time}, rank: {r}.".format(time=t, r=writeRank) 
             inst = MRV.MrVtkVecHandle(file_template.format(wrank=writeRank,
                                                            tstep=t)).get()
-            v = inst.data.GetPointData().GetArray(2)
+            v = inst.data.GetPointData().GetArray(0)
             p = inst.data.GetPoints()
             pm.Cart2Cyl(p,v)
             
             meanL,c0,c1 = pm.CreateLocalMeanMr(mean,inst,writeRank,
                                                   global_blocks)
+            # print(inst.data.GetDimensions())
+            # print(meanL.data.GetDimensions())
+            # print( inst.data.GetPointData().GetNumberOfArrays())
+            # print(meanL.data.GetPointData().GetNumberOfArrays())
+            # print(inst.data.GetPointData().GetArray(0).GetNumberOfComponents())
+            # print(meanL.data.GetPointData().GetArray(0).GetNumberOfComponents())
             fluc = inst - meanL
             varL = pm.AzimuthalAverage(fluc.power(2.0),writeRank,global_blocks)
             skeL = pm.AzimuthalAverage(fluc.power(3.0),writeRank,global_blocks)

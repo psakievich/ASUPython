@@ -14,6 +14,7 @@ from vtk.numpy_interface import dataset_adapter as dsa
 import Quadratures as Quad
 import numpy as np
 from operator import mul
+from mpi4py import MPI
 
 def Local2Global(indLocal, writingRank, gBlock, lBlock):
     kG = indLocal[2] + (writingRank//gBlock[1])*lBlock[2]
@@ -185,10 +186,21 @@ def AddSubset(totalSet, subSet, corner0, corner1):
     
     
 def ReduceGridToRank0(grid,comm):
-    math_grid = dsa.WrapDataObject(grid.data)
-    for i in range(grid.data.GetPointData().GetNumberOfArrays()):
-        comm.Reduce(math_grid.PointData[i][:],
-                    math_grid.PointData[i][:])
+    math_grid=dsa.WrapDataObject(grid.data)
+    pd = grid.data.GetPointData()
+    if comm.Get_size() == 1:
+        return
+    if comm.Get_rank() == 0:
+        for i in range(grid.data.GetPointData().GetNumberOfArrays()):
+            ar = numpy_support.vtk_to_numpy(pd.GetArray(i))
+            b = ar.copy()
+            comm.Reduce(b,ar, op = MPI.SUM, root=0)
+    else:
+        for i in range(grid.data.GetPointData().GetNumberOfArrays()):
+            ar = numpy_support.vtk_to_numpy(pd.GetArray(i))
+            b = ar.copy()
+            comm.Reduce(ar,b, op=MPI.SUM, root=0)
+        
         
 def Cart2Cyl(points, velocity):
     # assume these are vtkArrays
